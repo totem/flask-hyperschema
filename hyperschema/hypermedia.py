@@ -22,15 +22,25 @@ MIME_JSON = 'application/json'
 
 
 class HyperMedia:
+    """
+    Class wrapping methods for hypermedia
+    """
 
     def __init__(self, schema_cache_size=SCHEMA_CACHE_MAX_SIZE,
                  schema_path=SCHEMA_PATH):
         self.schema_cache_size = schema_cache_size
-        self.register_load_schema = self._load_schema()
+        self.load_schema = self._load_schema()
         self.get_all_schemas = self._get_all_schemas()
         self.schema_path = schema_path
 
     def _load_schema(self):
+        """
+        Creates the load schema function with cache decorator. Size of the
+        cache is read from property schema_cache_size
+
+        :return: load schema function
+        :rtype: function
+        """
         @lru_cache(self.schema_cache_size)
         def load_schema(base_url, schema_name):
             """
@@ -48,6 +58,12 @@ class HyperMedia:
         return load_schema
 
     def _get_all_schemas(self):
+        """
+        Creates get all schemas function (to fetch all available schemas).
+
+        :return: get_all_schemas function
+        :rtype: function
+        """
         @lru_cache(1)
         def get_all_schemas():
             return [os.path.splitext(os.path.basename(filepath))[0]
@@ -176,7 +192,10 @@ class SchemaApi(MethodView):
         """
         Gets the schema by ID
 
+        :param schema_id: id/name for the schema
+        :type schema_id: str
         :return: Flask Json Response containing version.
+        :rtype: flask.Response
         """
         schema = self.hypermedia.load_schema(request.url_root[:-1], schema_id)
         if not schema:

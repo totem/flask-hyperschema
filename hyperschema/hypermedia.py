@@ -28,6 +28,7 @@ class HyperMedia:
         self.schema_cache_size = schema_cache_size
         self.register_load_schema = self._load_schema()
         self.get_all_schemas = self._get_all_schemas()
+        self.schema_path = schema_path
 
     def _load_schema(self):
         @lru_cache(self.schema_cache_size)
@@ -38,10 +39,10 @@ class HyperMedia:
             :param schema_name:
             :return:
             """
-            fname = '%s/%s.json' % (SCHEMA_PATH, schema_name)
+            fname = '%s/%s.json' % (self.schema_path, schema_name)
             if not os.path.isfile(fname):
                 return None
-            with open('%s/%s.json' % (SCHEMA_PATH, schema_name)) as file:
+            with open('%s/%s.json' % (self.schema_path, schema_name)) as file:
                 data = file.read().replace('${base_url}', base_url)
                 return json.loads(data)
         return load_schema
@@ -124,7 +125,7 @@ class HyperMedia:
     def register_error_handlers(self, flask_app):
         @flask_app.errorhandler(ValidationError)
         def validation_error(error):
-            return _as_flask_error(error, **{
+            return self._as_flask_error(error, **{
                 'code': 'VALIDATION',
                 'message': error.message,
                 'details': self._get_error_details(error),
@@ -133,7 +134,7 @@ class HyperMedia:
 
         @flask_app.errorhandler(SchemaError)
         def schema_error(error):
-            return _as_flask_error(error, **{
+            return self._as_flask_error(error, **{
                 'code': 'SCHEMA_ERROR',
                 'message': error.message,
                 'details': self._get_error_details(error),
@@ -173,7 +174,7 @@ class SchemaApi(MethodView):
 
     def get(self, schema_id):
         """
-        Gets the version for the Deployer API.
+        Gets the schema by ID
 
         :return: Flask Json Response containing version.
         """
@@ -182,16 +183,3 @@ class SchemaApi(MethodView):
             return flask.abort(404)
         return flask.jsonify(schema)
 
-
-def _as_flask_error(error, message=None, details=None, traceback=None,
-                    status=500, code='INTERNAL'):
-    return flask.jsonify({
-        'path': request.path,
-        'url': request.url,
-        'method': request.method,
-        'message': message or str(error),
-        'details': details,
-        'traceback': traceback,
-        'status': status,
-        'code': code
-    }), status

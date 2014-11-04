@@ -1,5 +1,6 @@
 import json
 from flask import Flask, Response
+from jsonschema.exceptions import ValidationError, SchemaError
 from mock import Mock, patch
 from nose.tools import eq_
 from hyperschema.hypermedia import HyperMedia, MIME_JSON
@@ -207,8 +208,34 @@ class TestErrorHandlers:
         self.app = Flask(__name__)
         self.client = self.app.test_client(False)
         self.hypermedia = HyperMedia()
-        self.hypermedia.load_schema = Mock()
-        self.hypermedia.register_schema_api(self.app)
+        self.hypermedia.register_error_handlers(self.app)
+
+    def _create_mock_endpoint(self, error):
+        @self.app.route('/')
+        def test_endpoint():
+            raise error
+        return test_endpoint
 
     def test_validation_error(self):
-        pass
+        # given: Endpoint that returns validation error
+        error = ValidationError(message='Mock Message', schema=MOCK_SCHEMA,
+                                schema_path='/properties/mock')
+        self._create_mock_endpoint(error)
+
+        # When: I access test endpoint
+        resp = self.client.get('/')
+
+        # Then: Expected error response is returned
+        eq_(resp.status_code, 400)
+
+    def test_schema_error(self):
+        # given: Endpoint that returns validation error
+        error = SchemaError(message='Mock Message', schema=MOCK_SCHEMA,
+                            schema_path='/properties/mock')
+        self._create_mock_endpoint(error)
+
+        # When: I access test endpoint
+        resp = self.client.get('/')
+
+        # Then: Expected error response is returned
+        eq_(resp.status_code, 500)

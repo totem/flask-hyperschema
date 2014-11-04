@@ -182,4 +182,3 @@ class SchemaApi(MethodView):
         if not schema:
             return flask.abort(404)
         return flask.jsonify(schema)
-

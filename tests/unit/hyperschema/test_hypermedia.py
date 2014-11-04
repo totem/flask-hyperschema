@@ -127,7 +127,7 @@ class TestProduces:
         # Then: Expected status and content type is returned
         eq_(resp.status_code, 406)
 
-    def test_produces_with_multiple_headers_match(self):
+    def test_produces_with_headers_match(self):
         # Given: A test endpoint
         self._create_mock_endpoint({
             MIME_TEST: SCHEMA_TEST,
@@ -138,7 +138,7 @@ class TestProduces:
         resp = self.client.get(
             '/', headers=[
                 ('Accept', 'application/unsupported+json,'
-                           'application/vnd.test+json,application/json,'
+                           'application/vnd.test+json'
                  ),
             ])
 
@@ -199,4 +199,16 @@ class TestConsumes:
 
 
 class TestErrorHandlers:
-    pass
+    """
+    Tests  Schema Error handlers for HyperSchema
+    """
+
+    def setup(self):
+        self.app = Flask(__name__)
+        self.client = self.app.test_client(False)
+        self.hypermedia = HyperMedia()
+        self.hypermedia.load_schema = Mock()
+        self.hypermedia.register_schema_api(self.app)
+
+    def test_validation_error(self):
+        pass

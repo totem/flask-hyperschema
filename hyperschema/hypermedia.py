@@ -131,6 +131,16 @@ class HyperMedia:
         return decorated
 
     def register_schema_api(self, flask_app, schema_uri='/schemas'):
+        """
+        Registers schema API with flask
+
+        :param flask_app: Flask application
+        :type flask_app: Flask
+        :keyword schema_uri: URI for Schema endpoint. Defaults to '/schemas'
+        :type schema_uri: str
+        :return: self instance
+        :rtype: HyperMedia
+        """
         schema_view = SchemaApi.as_view('schemas')
         SchemaApi.hypermedia = self
         uris = ['%s/<string:schema_id>' % schema_uri, schema_uri,
@@ -140,6 +150,15 @@ class HyperMedia:
         return self
 
     def register_error_handlers(self, flask_app):
+        """
+        Registers error handlers for schema with flask application.
+
+        :param flask_app: Flask application
+        :type flask_app: Flask
+        :return: self instance
+        :rtype: HyperMedia
+        """
+
         @flask_app.errorhandler(ValidationError)
         def validation_error(error):
             return self._as_flask_error(error, **{

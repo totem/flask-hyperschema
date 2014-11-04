@@ -1,5 +1,4 @@
-# flask-hyperschema
-=================
+# flask-hyperschema [![Build Status](https://travis-ci.org/totem/flask-hyperschema.svg)](https://travis-ci.org/totem/flask-hyperschema) [![Coverage Status](https://img.shields.io/coveralls/totem/flask-hyperschema.svg)](https://coveralls.io/r/totem/flask-hyperschema) [![Documentation Status](https://readthedocs.org/projects/flask-hyperschema/badge/?version=latest)](https://readthedocs.org/projects/flask-hyperschema/?badge=latest)
 
 Provides integration of Json Schema and Json HyperSchema with Python Flask.
 

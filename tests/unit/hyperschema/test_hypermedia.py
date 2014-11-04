@@ -1,6 +1,6 @@
 import json
 from flask import Flask, Response
-from mock import Mock
+from mock import Mock, patch
 from nose.tools import eq_
 from hyperschema.hypermedia import HyperMedia, MIME_JSON
 
@@ -63,7 +63,7 @@ class TestSchemaApi:
         # Schema list is returned
         eq_(resp.status_code, 200)
         eq_(resp.mimetype, MIME_JSON)
-        eq_(schema_list, json.loads(resp.data.decode()))
+        eq_(json.loads(resp.data.decode()), schema_list)
 
 
 class TestProduces:
@@ -137,8 +137,9 @@ class TestProduces:
         # When I access the endpoint with no accept headers
         resp = self.client.get(
             '/', headers=[
-                ('Accept', 'application/unsupported+json,application/json,'
-                           'application/vnd.test+json'),
+                ('Accept', 'application/unsupported+json,'
+                           'application/vnd.test+json,application/json,'
+                 ),
             ])
 
         # Then: Expected status and content type is returned
@@ -159,12 +160,12 @@ class TestConsumes:
         self.hypermedia.load_schema = Mock()
         self.hypermedia.register_schema_api(self.app)
 
-    def _create_mock_endpoint(self, type_mappings, default=MIME_TEST):
-        @self.app.route('/')
-        @self.hypermedia.produces(type_mappings)
-        def test_endpoint(accept_mimetype, request_data=None,
-                          request_mimetype=MIME_TEST):
-            return Response('', mimetype=MIME_JSON)
+    def _create_mock_endpoint(self, type_mappings):
+        @self.app.route('/', methods=['POST'])
+        @self.hypermedia.consumes(type_mappings)
+        def test_endpoint(request_data=None, request_mimetype=MIME_TEST):
+            return Response(json.dumps(request_data),
+                            mimetype=request_mimetype)
         return test_endpoint
 
     def test_consumes_unsupported_endpoint(self):
@@ -174,3 +175,24 @@ class TestConsumes:
         })
 
         # When: I access the endpoint with unsupported content type
+        resp = self.client.get(
+            '/', headers=[('Content-Type', 'application/unsupported+json')])
+        eq_(resp.status_code, 415)
+
+    @patch('hyperschema.hypermedia.validate')
+    def test_consumes_with_suppported_endpoint(self, mock_validate):
+        # Given: A test endpoint
+        self._create_mock_endpoint({
+            MIME_TEST: SCHEMA_TEST
+        })
+
+        data = {
+            'key': 'value'
+        }
+
+        # When: I access the endpoint with unsupported content type
+        resp = self.client.post(
+            '/', data=json.dumps(data), headers=[('Content-Type', MIME_TEST)])
+        eq_(resp.status_code, 200)
+        eq_(resp.mimetype, MIME_TEST)
+        eq_(json.loads(resp.data.decode()), data)

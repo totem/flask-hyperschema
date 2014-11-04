@@ -96,7 +96,7 @@ class HyperMedia:
         return decorated
 
     @staticmethod
-    def produces(type_mappings, default=MIME_JSON):
+    def produces(type_mappings, default=MIME_JSON, set_mimetype=True):
         """
         Wrapper that does content negotiation based on accept headers and
         applies hyperschema to the response.
@@ -121,6 +121,9 @@ class HyperMedia:
                     mimetype = next(iter(supported))
                 kwargs.setdefault('accept_mimetype', mimetype)
                 resp = make_response(fn(*args, **kwargs))
+
+                if set_mimetype:
+                    resp.headers['Content-Type'] = mimetype
                 hyperschema = type_mappings[mimetype]
                 if hyperschema:
                     resp.headers['Link'] = \

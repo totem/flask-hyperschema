@@ -79,9 +79,9 @@ class TestProduces:
 
     def _create_mock_endpoint(self, type_mappings, default=MIME_TEST):
         @self.app.route('/')
-        @HyperMedia.produces(type_mappings, default=MIME_TEST)
-        def test_endpoint(accept_mimetype):
-            return Response('', mimetype=accept_mimetype)
+        @HyperMedia.produces(type_mappings, default=default)
+        def test_endpoint(**kwargs):
+            return Response('')
         return test_endpoint
 
     def test_produces_with_no_accept_headers(self):

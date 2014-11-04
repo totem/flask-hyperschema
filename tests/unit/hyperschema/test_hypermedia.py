@@ -173,3 +173,4 @@ class TestConsumes:
             MIME_TEST: SCHEMA_TEST
         })
 
+        # When: I access the endpoint with unsupported content type

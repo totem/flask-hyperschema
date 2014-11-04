@@ -175,7 +175,7 @@ class TestConsumes:
         })
 
         # When: I access the endpoint with unsupported content type
-        resp = self.client.get(
+        resp = self.client.post(
             '/', headers=[('Content-Type', 'application/unsupported+json')])
         eq_(resp.status_code, 415)
 
@@ -196,3 +196,7 @@ class TestConsumes:
         eq_(resp.status_code, 200)
         eq_(resp.mimetype, MIME_TEST)
         eq_(json.loads(resp.data.decode()), data)
+
+
+class TestErrorHandlers:
+    pass

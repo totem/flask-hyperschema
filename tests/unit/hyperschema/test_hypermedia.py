@@ -38,7 +38,7 @@ class TestSchemaApi:
         # Expected schema is returned
         eq_(resp.status_code, 200)
         eq_(resp.mimetype, MIME_JSON)
-        eq_(MOCK_SCHEMA, json.loads(resp.data))
+        eq_(MOCK_SCHEMA, json.loads(resp.data.decode()))
         self.hypermedia.load_schema.assert_called_once_with(
             'http://localhost', 'schema1')
 
@@ -63,7 +63,7 @@ class TestSchemaApi:
         # Schema list is returned
         eq_(resp.status_code, 200)
         eq_(resp.mimetype, MIME_JSON)
-        eq_(schema_list, json.loads(resp.data))
+        eq_(schema_list, json.loads(resp.data.decode()))
 
 
 class TestProduces:
@@ -146,3 +146,30 @@ class TestProduces:
         eq_(resp.mimetype, MIME_TEST)
         eq_(resp.headers['Link'],
             '<http://localhost/schemas/schema-test#>; rel="describedBy"')
+
+
+class TestConsumes:
+    """
+    Tests for wrapper consumes
+    """
+    def setup(self):
+        self.app = Flask(__name__)
+        self.client = self.app.test_client(False)
+        self.hypermedia = HyperMedia()
+        self.hypermedia.load_schema = Mock()
+        self.hypermedia.register_schema_api(self.app)
+
+    def _create_mock_endpoint(self, type_mappings, default=MIME_TEST):
+        @self.app.route('/')
+        @self.hypermedia.produces(type_mappings)
+        def test_endpoint(accept_mimetype, request_data=None,
+                          request_mimetype=MIME_TEST):
+            return Response('', mimetype=MIME_JSON)
+        return test_endpoint
+
+    def test_consumes_unsupported_endpoint(self):
+        # Given: A test endpoint
+        self._create_mock_endpoint({
+            MIME_TEST: SCHEMA_TEST
+        })
+

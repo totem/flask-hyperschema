@@ -1,0 +1,148 @@
+import json
+from flask import Flask, Response
+from mock import Mock
+from nose.tools import eq_
+from hyperschema.hypermedia import HyperMedia, MIME_JSON
+
+__author__ = 'sukrit'
+
+MOCK_SCHEMA = {
+    '$schema': 'http://json-schema.org/draft-04/hyper-schema#',
+    'type': 'object'
+}
+
+SCHEMA_TEST = 'schema-test'
+MIME_TEST = 'application/vnd.test+json'
+
+
+class TestSchemaApi:
+    """
+    Tests for SchemaApi
+    """
+
+    def setup(self):
+        self.app = Flask(__name__)
+        self.hypermedia = HyperMedia()
+        self.hypermedia.register_schema_api(self.app)
+        self.hypermedia.load_schema = Mock()
+        self.hypermedia.get_all_schemas = Mock()
+        self.client = self.app.test_client(False)
+
+    def test_get_existing_schema(self):
+        # Given: Existing schema
+        self.hypermedia.load_schema.return_value = MOCK_SCHEMA
+
+        # When I get schema by given id
+        resp = self.client.get('/schemas/schema1')
+
+        # Expected schema is returned
+        eq_(resp.status_code, 200)
+        eq_(resp.mimetype, MIME_JSON)
+        eq_(MOCK_SCHEMA, json.loads(resp.data))
+        self.hypermedia.load_schema.assert_called_once_with(
+            'http://localhost', 'schema1')
+
+    def test_get_schema_when_not_found(self):
+        # Given: Existing schema
+        self.hypermedia.load_schema.return_value = None
+
+        # When I get schema by given id
+        resp = self.client.get('/schemas/schema1')
+
+        # Expected schema is returned
+        eq_(resp.status_code, 404)
+
+    def test_should_list_schemas(self):
+        # Given: Existing schemas
+        schema_list = ['schema1', 'schema2']
+        self.hypermedia.get_all_schemas.return_value = schema_list
+
+        # When I get all schemas
+        resp = self.client.get('/schemas')
+
+        # Schema list is returned
+        eq_(resp.status_code, 200)
+        eq_(resp.mimetype, MIME_JSON)
+        eq_(schema_list, json.loads(resp.data))
+
+
+class TestProduces:
+    """
+    Tests for wrapper produces
+    """
+    def setup(self):
+        self.app = Flask(__name__)
+        self.client = self.app.test_client(False)
+        self.hypermedia = HyperMedia()
+        self.hypermedia.register_schema_api(self.app)
+
+    def _create_mock_endpoint(self, type_mappings, default=MIME_TEST):
+        @self.app.route('/')
+        @HyperMedia.produces(type_mappings, default=MIME_TEST)
+        def test_endpoint(accept_mimetype):
+            return Response('', mimetype=accept_mimetype)
+        return test_endpoint
+
+    def test_produces_with_no_accept_headers(self):
+        # Given: A test endpoint
+        self._create_mock_endpoint({
+            MIME_TEST: SCHEMA_TEST
+        })
+
+        # When I access the endpoint with no accept headers
+        resp = self.client.get('/')
+
+        # Then: Expected status and content type is returned
+        eq_(resp.status_code, 200)
+        eq_(resp.mimetype, MIME_TEST)
+        eq_(resp.headers['Link'],
+            '<http://localhost/schemas/schema-test#>; rel="describedBy"')
+
+    def test_produces_with_all_headers(self):
+        # Given: A test endpoint
+        self._create_mock_endpoint({
+            MIME_TEST: SCHEMA_TEST
+        })
+
+        # When I access the endpoint with no accept headers
+        resp = self.client.get('/',
+                               headers=[('Accept', '*/*')])
+
+        # Then: Expected status and content type is returned
+        eq_(resp.status_code, 200)
+        eq_(resp.mimetype, MIME_TEST)
+        eq_(resp.headers['Link'],
+            '<http://localhost/schemas/schema-test#>; rel="describedBy"')
+
+    def test_produces_with_unsupported_header(self):
+        # Given: A test endpoint
+        self._create_mock_endpoint({
+            MIME_TEST: SCHEMA_TEST
+        })
+
+        # When I access the endpoint with no accept headers
+        resp = self.client.get('/',
+                               headers=[('Accept', 'application/unsupported')])
+
+        # Then: Expected status and content type is returned
+        eq_(resp.status_code, 406)
+
+    def test_produces_with_multiple_headers_match(self):
+        # Given: A test endpoint
+        self._create_mock_endpoint({
+            MIME_TEST: SCHEMA_TEST,
+            MIME_JSON: SCHEMA_TEST,
+        })
+
+        # When I access the endpoint with no accept headers
+        resp = self.client.get(
+            '/', headers=[
+                ('Accept', 'application/unsupported+json,application/json,'
+                           'application/vnd.test+json'),
+            ])
+
+        # Then: Expected status and content type is returned
+        eq_(resp.status_code, 200)
+        eq_(resp.mimetype, MIME_TEST)
+        eq_(resp.headers['Link'],
+            '<http://localhost/schemas/schema-test#>; rel="describedBy"')

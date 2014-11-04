@@ -8,7 +8,7 @@ import glob
 import json
 import os
 import traceback
-from flask import make_response, request, url_for
+from flask import make_response, request, url_for, Response
 import flask
 from flask.views import MethodView
 from jsonschema import validate, ValidationError, SchemaError
@@ -131,11 +131,12 @@ class HyperMedia:
         return decorated
 
     def register_schema_api(self, flask_app, schema_uri='/schemas'):
+        schema_view = SchemaApi.as_view('schemas')
         SchemaApi.hypermedia = self
-        flask_app.add_url_rule(
-            '%s/<string:schema_id>' % schema_uri,
-            view_func=SchemaApi.as_view('schemas'),
-            methods=['GET'])
+        uris = ['%s/<string:schema_id>' % schema_uri, schema_uri,
+                schema_uri+'/']
+        for uri in uris:
+            flask_app.add_url_rule(uri, view_func=schema_view, methods=['GET'])
         return self
 
     def register_error_handlers(self, flask_app):
@@ -188,16 +189,23 @@ class SchemaApi(MethodView):
 
     hypermedia = None
 
-    def get(self, schema_id):
+    def get(self, schema_id=None):
         """
-        Gets the schema by ID
+        Gets the schema by ID if schema_id is given or lists all schemas
 
-        :param schema_id: id/name for the schema
+        :param schema_id: id/name for the schema. If None, all schemas are
+            listed
         :type schema_id: str
         :return: Flask Json Response containing version.
         :rtype: flask.Response
         """
-        schema = self.hypermedia.load_schema(request.url_root[:-1], schema_id)
-        if not schema:
-            return flask.abort(404)
-        return flask.jsonify(schema)
+        if schema_id:
+            schema = self.hypermedia.load_schema(request.url_root[:-1],
+                                                 schema_id)
+            if not schema:
+                return flask.abort(404)
+            return flask.jsonify(schema)
+
+        else:
+            schema_list = self.hypermedia.get_all_schemas()
+            return Response(json.dumps(schema_list), mimetype=MIME_JSON)

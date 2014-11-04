@@ -105,6 +105,12 @@ class HyperMedia:
         content negotiation.
 
         :param type_mappings: Dictionary of (content type, hyperschema name)
+        :type type_mappings: dict
+        :param default: Default Mime Type if no Accept header is specified.
+        :type default: str
+        :param set_mimetype: If True: the mimetype is automatically set for
+            response .
+        :type set_mimetype: bool
         :return: decorated function
         """
         def decorated(fn):

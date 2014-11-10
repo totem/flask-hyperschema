@@ -50,9 +50,7 @@ class HyperMedia:
             :return:
             """
             fname = '%s/%s.json' % (self.schema_path, schema_name)
-            if not os.path.isfile(fname):
-                return None
-            with open('%s/%s.json' % (self.schema_path, schema_name)) as file:
+            with open(fname) as file:
                 data = file.read().replace('${base_url}', base_url)
                 return json.loads(data)
         return load_schema

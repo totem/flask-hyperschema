@@ -14,6 +14,7 @@ MOCK_SCHEMA = {
 
 SCHEMA_TEST = 'schema-test'
 MIME_TEST = 'application/vnd.test+json'
+MIME_FORM_URL_ENC = 'application/x-www-form-urlencoded'
 
 
 class TestSchemaApi:
@@ -196,6 +197,29 @@ class TestConsumes:
             '/', data=json.dumps(data), headers=[('Content-Type', MIME_TEST)])
         eq_(resp.status_code, 200)
         eq_(resp.mimetype, MIME_TEST)
+        eq_(json.loads(resp.data.decode()), data)
+
+    @patch('hyperschema.hypermedia.validate')
+    def test_consumes_with_suppported_url_encoded_endpoint(self,
+                                                           mock_validate):
+        # Given: A test endpoint
+        self._create_mock_endpoint({
+            MIME_FORM_URL_ENC: SCHEMA_TEST
+        })
+
+        data = {
+            'key': 'value'
+        }
+
+        form_data = {
+            'payload': json.dumps(data)
+        }
+
+        # When: I access the endpoint with unsupported content type
+        resp = self.client.post(
+            '/', data=form_data, headers=[('Content-Type', MIME_FORM_URL_ENC)])
+        eq_(resp.status_code, 200)
+        eq_(resp.mimetype, MIME_FORM_URL_ENC)
         eq_(json.loads(resp.data.decode()), data)
 
 

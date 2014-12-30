@@ -81,7 +81,11 @@ class HyperMedia:
             def wrapper(*args, **kwargs):
                 if request.mimetype not in type_mappings:
                     raise UnsupportedMediaType()
-                data = json.loads(request.data.decode())
+                if request.mimetype.lower() == \
+                        'application/x-www-form-urlencoded':
+                    data = json.loads(request.form['payload'])
+                else:
+                    data = json.loads(request.data.decode())
                 schema_name = type_mappings.get(request.mimetype)
                 if schema_name:
                     schema = self.load_schema(request.url_root[:-1],

@@ -98,7 +98,8 @@ class HyperMedia:
         return decorated
 
     @staticmethod
-    def produces(type_mappings, default=MIME_JSON, set_mimetype=True):
+    def produces(type_mappings, default=MIME_JSON, set_mimetype=True,
+                 strict=False):
         """
         Wrapper that does content negotiation based on accept headers and
         applies hyperschema to the response.
@@ -113,6 +114,10 @@ class HyperMedia:
         :param set_mimetype: If True: the mimetype is automatically set for
             response .
         :type set_mimetype: bool
+        :keyword strict: Boolean parameter specifying whether to use strict
+            negotiation. If False, default mimetype is used if negotiation
+            fails else 406 response is returned.
+        :type strict: bool
         :return: decorated function
         """
         def decorated(fn):
@@ -124,7 +129,10 @@ class HyperMedia:
                 if len(requested) == 0 or next(iter(requested)) == '*/*':
                     mimetype = default
                 elif len(supported) == 0:
-                    raise NotAcceptable()
+                    if strict:
+                        raise NotAcceptable()
+                    else:
+                        mimetype = default
                 else:
                     mimetype = next(iter(supported))
                 kwargs.setdefault('accept_mimetype', mimetype)

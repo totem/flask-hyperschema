@@ -78,9 +78,10 @@ class TestProduces:
         self.hypermedia = HyperMedia()
         self.hypermedia.register_schema_api(self.app)
 
-    def _create_mock_endpoint(self, type_mappings, default=MIME_TEST):
+    def _create_mock_endpoint(self, type_mappings, default=MIME_TEST,
+                              strict=False):
         @self.app.route('/')
-        @HyperMedia.produces(type_mappings, default=default)
+        @HyperMedia.produces(type_mappings, default=default, strict=strict)
         def test_endpoint(**kwargs):
             return Response('')
         return test_endpoint
@@ -116,11 +117,11 @@ class TestProduces:
         eq_(resp.headers['Link'],
             '<http://localhost/schemas/schema-test#>; rel="describedBy"')
 
-    def test_produces_with_unsupported_header(self):
+    def test_produces_with_unsupported_header_and_strict_mode(self):
         # Given: A test endpoint
         self._create_mock_endpoint({
             MIME_TEST: SCHEMA_TEST
-        })
+        }, strict=True)
 
         # When I access the endpoint with no accept headers
         resp = self.client.get('/',
@@ -128,6 +129,19 @@ class TestProduces:
 
         # Then: Expected status and content type is returned
         eq_(resp.status_code, 406)
+
+    def test_produces_with_unsupported_header_and_non_strict_mode(self):
+        # Given: A test endpoint
+        self._create_mock_endpoint({
+            MIME_TEST: SCHEMA_TEST
+        }, strict=False)
+
+        # When I access the endpoint with no accept headers
+        resp = self.client.get('/',
+                               headers=[('Accept', 'application/unsupported')])
+
+        # Then: Expected status and content type is returned
+        eq_(resp.status_code, 200)
 
     def test_produces_with_headers_match(self):
         # Given: A test endpoint

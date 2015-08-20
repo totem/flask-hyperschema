@@ -3,5 +3,5 @@ mock==1.0.1
 flake8==2.2.3
 Sphinx==1.2.3
 
-# Code Coverate
+# Code Coverage
 coveralls

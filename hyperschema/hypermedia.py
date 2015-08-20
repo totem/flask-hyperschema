@@ -83,9 +83,9 @@ class HyperMedia:
                     raise UnsupportedMediaType()
                 if request.mimetype.lower() == \
                         'application/x-www-form-urlencoded':
-                    data = json.loads(request.form['payload'])
+                    data = json.loads(request.form['payload'].decode('utf-8'))
                 else:
-                    data = json.loads(request.data)
+                    data = json.loads(request.data.decode('utf-8'))
                 schema_name = type_mappings.get(request.mimetype)
                 if schema_name:
                     schema = self.load_schema(request.url_root[:-1],

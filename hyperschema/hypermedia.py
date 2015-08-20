@@ -85,7 +85,7 @@ class HyperMedia:
                         'application/x-www-form-urlencoded':
                     data = json.loads(request.form['payload'])
                 else:
-                    data = json.loads(request.data.decode())
+                    data = json.loads(request.data)
                 schema_name = type_mappings.get(request.mimetype)
                 if schema_name:
                     schema = self.load_schema(request.url_root[:-1],

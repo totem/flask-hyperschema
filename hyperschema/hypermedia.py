@@ -27,11 +27,24 @@ class HyperMedia:
     """
 
     def __init__(self, schema_cache_size=SCHEMA_CACHE_MAX_SIZE,
-                 schema_path=SCHEMA_PATH):
+                 schema_path=SCHEMA_PATH, base_url=None):
+        """
+        Constructor
+
+        :keyword schema_cache_size: Cache size for storing schema
+          (defaults to 50)
+        :type schema_cache_size: str
+        :keyword schema_path: File Path where schemas are stored
+          (defaults to ./schemas)
+        :type schema_path: str
+        :keyword base_url: Base url for loading schemas
+        :type base_url: str
+        """
         self.schema_cache_size = schema_cache_size
         self.load_schema = self._load_schema()
         self.get_all_schemas = self._get_all_schemas()
         self.schema_path = schema_path
+        self.base_url = base_url
 
     def _load_schema(self):
         """
@@ -51,7 +64,8 @@ class HyperMedia:
             """
             fname = '%s/%s.json' % (self.schema_path, schema_name)
             with open(fname) as file:
-                data = file.read().replace('${base_url}', base_url)
+                data = file.read().replace(
+                    '${base_url}', base_url or self.base_url)
                 return json.loads(data)
         return load_schema
 
@@ -88,8 +102,9 @@ class HyperMedia:
                     data = json.loads(request.data.decode('utf-8'))
                 schema_name = type_mappings.get(request.mimetype)
                 if schema_name:
-                    schema = self.load_schema(request.url_root[:-1],
-                                              schema_name)
+                    schema = self.load_schema(
+                        self.base_url or request.url_root[:-1],
+                        schema_name)
                     validate(data, schema)
                 kwargs.setdefault('request_mimetype', request.mimetype)
                 kwargs.setdefault('request_data', data)

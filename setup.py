@@ -5,7 +5,7 @@ with open('./requirements.txt') as reqs_txt:
 
 setup(
     name="flask-hyperschema",
-    version="0.1.1",
+    version="0.2.0",
     description="Flask Schema and Hyperschema Extension",
     author='Sukrit Khera',
     packages=['hyperschema'],
@@ -13,7 +13,7 @@ setup(
     zip_safe=True,
     test_suite='tests',
     classifiers=[
-        'Development Status :: In development',
+        'Development Status :: In Production',
         'Environment :: Other Environment',
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',

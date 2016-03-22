@@ -15,6 +15,7 @@ MOCK_SCHEMA = {
 SCHEMA_TEST = 'schema-test'
 MIME_TEST = 'application/vnd.test+json'
 MIME_FORM_URL_ENC = 'application/x-www-form-urlencoded'
+MOCK_BASE_URL = 'http://mock-base-url'
 
 
 class TestSchemaApi:
@@ -206,12 +207,39 @@ class TestConsumes:
             'key': 'value'
         }
 
-        # When: I access the endpoint with unsupported content type
+        # When: I access the endpoint with supported content type
         resp = self.client.post(
             '/', data=json.dumps(data), headers=[('Content-Type', MIME_TEST)])
+
+        # Then: Successful response is returned
         eq_(resp.status_code, 200)
         eq_(resp.mimetype, MIME_TEST)
         eq_(json.loads(resp.data.decode()), data)
+        self.hypermedia.load_schema.assert_called_once_with(
+            'http://localhost', SCHEMA_TEST)
+
+    @patch('hyperschema.hypermedia.validate')
+    def test_consumes_with_custom_baseurl(self, mock_validate):
+        # Given: A test endpoint
+        self._create_mock_endpoint({
+            MIME_TEST: SCHEMA_TEST
+        })
+
+        data = {
+            'key': 'value'
+        }
+
+        # And: Custom base url
+        self.hypermedia.base_url = MOCK_BASE_URL
+
+        # When: I access the endpoint with supported content type
+        resp = self.client.post(
+            '/', data=json.dumps(data), headers=[('Content-Type', MIME_TEST)])
+
+        # Then: Successful response is returned
+        eq_(resp.status_code, 200)
+        self.hypermedia.load_schema.assert_called_once_with(
+            MOCK_BASE_URL, SCHEMA_TEST)
 
     @patch('hyperschema.hypermedia.validate')
     def test_consumes_with_suppported_url_encoded_endpoint(self,

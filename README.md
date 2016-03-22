@@ -3,7 +3,7 @@
 Provides integration of Json Schema and Json HyperSchema with Python Flask.
 
 ## Development Status
-This library is currently under development.
+This library is production ready.
 
 ## Documentation
 Project uses Sphinx for code/api dpcumentation

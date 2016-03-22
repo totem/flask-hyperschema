@@ -31,9 +31,11 @@ class HyperMedia:
         """
         Constructor
 
-        :keyword schema_cache_size: Cache size for storing schema (defaults to 50)
+        :keyword schema_cache_size: Cache size for storing schema
+          (defaults to 50)
         :type schema_cache_size: str
-        :keyword schema_path: File Path where schemas are stored (defaults to ./schemas)
+        :keyword schema_path: File Path where schemas are stored
+          (defaults to ./schemas)
         :type schema_path: str
         :keyword base_url: Base url for loading schemas
         :type base_url: str
